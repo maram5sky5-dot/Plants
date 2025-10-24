@@ -14,18 +14,19 @@ struct Set_Reminder: View {
     @State private var wateringDay: String = "Every day"
     @State private var waterAmount: String = "20-50 ml"
     
+    
     let rooms = ["Bedroom","Living Room","Kitchen","Balcony","Bathroom"]
     let lightOptions = ["Full Sun","Partial Sun","Low Light"]
     let wateringDaysOptions = ["Every day","Every 2 days","Every 3 days", "Once a week", "Every 10 days", "Every 2 weeks"]
     let waterAmounts = ["20-50 ml","50-100 ml","100-200 ml","200-300 ml"]
     
+    // لون العلامة (28E0A8)
+    @Environment(\.dismiss) private var dismiss
+    
+    
     var body: some View {
-        VStack(spacing: 20) {
-            
-            Text("Set Reminder")
-                .font(.headline)
-                .foregroundColor(.white)
-                .padding(.top, 8)
+        NavigationView {
+            VStack(spacing: 20) {
             
             HStack {
                 Text("Plant Name")
@@ -63,10 +64,16 @@ struct Set_Reminder: View {
                     .labelsHidden()
                     .pickerStyle(.menu)
                     .frame(minWidth: 90)
+                    .foregroundColor(.gray)
+                    
                 }
                 .padding(.vertical, 14)
                 .padding(.leading, 16)
                 .padding(.trailing, 12)
+                .tint(.gray)
+               
+                Divider()
+                    .background(Color.gray.opacity(0.6))
                 
                
                 // Right: Light
@@ -93,6 +100,7 @@ struct Set_Reminder: View {
                 .padding(.vertical, 14)
                 .padding(.trailing, 16)
                 .padding(.leading, 12)
+                .tint(.gray)
             }
             .background(Color.white.opacity(0.06))
             .cornerRadius(12)
@@ -111,16 +119,18 @@ struct Set_Reminder: View {
                         ForEach(wateringDaysOptions, id: \.self) { day in
                             Text(day).tag(day)
                                 .foregroundColor(.gray)
-                                .font(.subheadline)
+                                
                         }
                     }
                     .labelsHidden()
                     .pickerStyle(.menu)
+                    .tint(.gray)
                 }
                 .padding()
                 .background(Color.white.opacity(0.06))
                 .cornerRadius(12)
-                
+                Divider()
+                    .background(Color.gray.opacity(0.6))
                 
                 // ===== Water amount row =====
                 HStack {
@@ -139,13 +149,49 @@ struct Set_Reminder: View {
                 .padding()
                 .background(Color.white.opacity(0.06))
                 .cornerRadius(12)
+                .tint(.gray)
+                
             }
-            Spacer()
-            
-        }
-        .padding()
-        .background(Color.black.ignoresSafeArea()) // خلفية عامة للتصميم الداكن
-        .preferredColorScheme(.dark) // للتأكد من الـ preview في الوضع الداكن
+                Spacer()
+            }
+            .padding()
+            .background(Color.black.ignoresSafeArea()) // خلفية داكنة
+            .preferredColorScheme(.dark)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                // زر الإلغاء على اليسار
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundColor(.white.opacity(0.9))
+                    }
+                }
+                
+                // العنوان في الوسط
+                ToolbarItem(placement: .principal) {
+                    Text("Set Reminder")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                }
+                
+                // زر الحفظ/الموافقة على اليمين
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        // هنا تضيف التصرف عند الضغط (مثلاً حفظ البيانات أو الانتقال)
+                        // حالياً نغلق الـ sheet أو الشاشة
+                        dismiss()
+                    }) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundColor(Color(red: 0.16, green: 0.88, blue: 0.66)) // لون العلامة 28E0A8
+                            .shadow(radius: 1)
+                    }
+                }
+            }
+        } // NavigationView
     }
 }
 
@@ -154,4 +200,3 @@ struct Set_Reminder_Previews: PreviewProvider {
         Set_Reminder()
     }
 }
-

@@ -15,6 +15,8 @@ struct TodayReminderView: View {
     let wateringDay: String
     let waterAmount: String
 
+    
+    
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
@@ -34,17 +36,24 @@ struct TodayReminderView: View {
             
                 Text("Your plants are waiting for a sip 💧")
                     .foregroundColor(.white)
-                
-            //من هنا نبدا نشوف كيف البيانات حقت النباتات 
-                
+                ProgressView(value:0)//progress هذا يفترض انه حساب التقدم بس حاليا ما عندي شيء فيطلع لي خطا عشان كذا نعطيه انه ٠ حاليا
+                        .progressViewStyle(LinearProgressViewStyle(tint: .green))
+                        .frame(height: 8)
+                        .cornerRadius(4)
+                        .padding(.trailing, 10)
+            //من هنا نبدا نشوف كيف البيانات حقت النباتات
+          
                 // عرض بيانات النبتة
                 VStack(alignment: .leading, spacing: 12) {
+                    //هنا كتبت الخيار حق المكان
+                    Label(room, systemImage: "location")
+                        .foregroundColor(.gray)
+                        .font(.subheadline)
                     Text("🌿 \(plantName.isEmpty ? "Unnamed Plant" : plantName)")
                         .font(.headline)
                         .foregroundColor(.white)
                     
                     HStack {
-                        Label(room, systemImage: "location")
                         Label(light, systemImage: "sun.max")
                         Label(waterAmount, systemImage: "drop")
                     }
