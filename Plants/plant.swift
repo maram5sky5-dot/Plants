@@ -4,7 +4,6 @@
 //
 //  Created by Maram Ibrahim  on 04/05/1447 AH.
 //
-
 import Foundation
 
 struct Plant: Identifiable, Equatable {

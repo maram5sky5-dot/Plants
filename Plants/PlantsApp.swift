@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct Plants_App: App {
+struct Plants_testApp: App {
     @StateObject private var store = PlantStore()
     
     var body: some Scene {
@@ -18,3 +18,4 @@ struct Plants_App: App {
         }
     }
 }
+

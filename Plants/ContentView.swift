@@ -68,7 +68,7 @@ struct ContentView: View {
 
                     Spacer()
 
-                    // 🟢 الزر في الأسفل
+        
                     Button(action: {
                         showReminderSheet.toggle()
                     }) {
@@ -95,7 +95,7 @@ struct ContentView: View {
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $showReminderSheet) {
-                ReminderSetupView()
+                Set_Reminder()
             }
         }
     }
@@ -106,7 +106,7 @@ struct ReminderSetupView: View {
     var body: some View {
         NavigationView {
             VStack {
-                Text("Reminder setup screen")
+                
                 Spacer()
             }
             .navigationTitle("Set Reminder")

@@ -31,7 +31,7 @@ struct TodayReminderView: View {
                 Text("\(store.plants.filter { $0.isWatered }.count) of your plants feel loved today ✨")
                     .foregroundColor(.gray)
                 
-                // شريط التقدّم مع أنيميشن
+                
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule().frame(height: 10).foregroundColor(Color.white.opacity(0.12))
@@ -160,3 +160,4 @@ struct TodayReminderView_Previews: PreviewProvider {
         return TodayReminderView().environmentObject(store)
     }
 }
+// عند الضغظ على زر النبتة نفسها يفترض انه منه تطلع صفحة التعديل والحذف 
