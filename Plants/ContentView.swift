@@ -19,6 +19,7 @@ extension Color {
 
 struct ContentView: View {
     @State private var showReminderSheet = false
+    @StateObject private var store = PlantStore() // أضفت هذا لتمريره إلى Set_Reminder
 
     var body: some View {
         NavigationView {
@@ -68,7 +69,7 @@ struct ContentView: View {
 
                     Spacer()
 
-        
+                    // 🟢 الزر في الأسفل
                     Button(action: {
                         showReminderSheet.toggle()
                     }) {
@@ -94,8 +95,10 @@ struct ContentView: View {
                 }
             }
             .navigationBarHidden(true)
+            // هنا قمنا بتغيير الوجهة لتفتح Set_Reminder وتمرير المخزن
             .sheet(isPresented: $showReminderSheet) {
                 Set_Reminder()
+                    .environmentObject(store)
             }
         }
     }
@@ -106,7 +109,7 @@ struct ReminderSetupView: View {
     var body: some View {
         NavigationView {
             VStack {
-                
+                Text("Reminder setup screen")
                 Spacer()
             }
             .navigationTitle("Set Reminder")
