@@ -100,7 +100,6 @@ struct Set_Reminder: View {
                 .padding(.vertical, 14)
                 .padding(.trailing, 16)
                 .padding(.leading, 12)
-                .tint(.gray)
             }
             .background(Color.white.opacity(0.06))
             .cornerRadius(12)
@@ -149,7 +148,6 @@ struct Set_Reminder: View {
                 .padding()
                 .background(Color.white.opacity(0.06))
                 .cornerRadius(12)
-                .tint(.gray)
                 
             }
                 Spacer()
