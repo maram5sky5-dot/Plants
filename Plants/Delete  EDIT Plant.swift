@@ -5,25 +5,19 @@
 //  Created by Maram Ibrahim  on 04/05/1447 AH.
 //
 
-
 import SwiftUI
 
 struct EditPlantView: View {
-    // نستقبل Binding إلى العنصر داخل الـ store
     @EnvironmentObject var store: PlantStore
     @Environment(\.dismiss) private var dismiss
-
-    // Binding إلى النبتة التي نريد تعديلها
     @Binding var plant: Plant
 
-    // حقول محلية لواجهة التحرير (نستخدمها حتى يمكن التراجع قبل الحفظ)
     @State private var plantName: String = ""
     @State private var room: String = "Bedroom"
     @State private var light: String = "Full Sun"
     @State private var wateringDay: String = "Every day"
     @State private var waterAmount: String = "20-50 ml"
 
-    // Alert state للحذف المؤكد
     @State private var showingDeleteAlert = false
 
     let rooms = ["Bedroom","Living Room","Kitchen","Balcony","Bathroom"]
@@ -121,9 +115,7 @@ struct EditPlantView: View {
                     .cornerRadius(12)
                 }
 
-                Spacer()
-
-                // ===== Delete button في الأسفل =====
+                // ===== Delete button مباشرة بعد الخيارات =====
                 Button {
                     showingDeleteAlert = true
                 } label: {
@@ -142,13 +134,14 @@ struct EditPlantView: View {
                 } message: {
                     Text("This will remove the plant from your list.")
                 }
+
+                Spacer() // يبقي المساحة فارغة أسفل الزر
             }
             .padding()
             .background(Color.black.ignoresSafeArea())
             .preferredColorScheme(.dark)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // زر الغلق
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
@@ -157,12 +150,10 @@ struct EditPlantView: View {
                     }
                 }
 
-                // عنوان
                 ToolbarItem(placement: .principal) {
                     Text("Edit Plant").font(.headline).foregroundColor(.white)
                 }
 
-                // زر الحفظ: نكتب القيم المحررة إلى الـ binding
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         saveChanges()
@@ -175,47 +166,36 @@ struct EditPlantView: View {
                 }
             }
             .onAppear {
-                // ملء الحقول من النبتة المرتبطة عندما تظهر الـ view
                 plantName = plant.name
                 room = plant.room
                 light = plant.light
                 wateringDay = plant.wateringDay
                 waterAmount = plant.waterAmount
             }
-        } // NavigationView
+        }
     }
 
-    // MARK: - وظائف الحفظ والحذف
     private func saveChanges() {
-        // نحدّث الـ binding (وبالتالي يتحدّث store)
         plant.name = plantName
         plant.room = room
         plant.light = light
         plant.wateringDay = wateringDay
         plant.waterAmount = waterAmount
-
     }
 
     private func performDelete() {
-        // نبحث عن الفهرس ونزيل من مصفوفة الـ store مباشرة
         if let idx = store.plants.firstIndex(where: { $0.id == plant.id }) {
             store.plants.remove(at: idx)
-        } else {
-            // إن أردت: محاولة استدعاء دالة حذف مخصصة في PlantStore إن وُجدت
-            // store.remove(plant)
         }
         dismiss()
     }
 }
 
-// ===== مثال Preview =====
 struct EditPlantView_Previews: PreviewProvider {
     static var previews: some View {
-        // إعداد مخزن تجريبي مع نبتة
         let store = PlantStore()
         let sample = Plant(name: "Pothos", room: "Bedroom", light: "Full Sun", wateringDay: "Every day", waterAmount: "20-50 ml")
         store.add(sample)
-        // نمرّر binding إلى العنصر الأول
         return EditPlantView(plant: .constant(sample))
             .environmentObject(store)
     }
