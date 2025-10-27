@@ -1,4 +1,3 @@
-//
 //  TodayReminderView.swift
 //  Plants
 //
@@ -7,31 +6,35 @@
 
 import SwiftUI
 
+// MARK: - TodayReminderView (مرتبط بصفحة Done عند اكتمال البار)
 struct TodayReminderView: View {
     @EnvironmentObject var store: PlantStore
     @State private var showingAdd = false
-    
+
+    // عند true سيعرض شاشة Done
+    @State private var navigateToDone: Bool = false
+
     var progress: Double {
         guard !store.plants.isEmpty else { return 0.0 }
         let watered = store.plants.filter { $0.isWatered }.count
         return Double(watered) / Double(store.plants.count)
     }
-    
+
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-            
+
             VStack(alignment: .leading, spacing: 12) {
                 Text("My Plants 🌱")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                     .padding(.top, 12)
-                
+
                 Text("\(store.plants.filter { $0.isWatered }.count) of your plants feel loved today ✨")
                     .foregroundColor(.gray)
-                
-                
+                Divider().background(Color.white.opacity(0.06))
+
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule().frame(height: 10).foregroundColor(Color.white.opacity(0.12))
@@ -43,13 +46,15 @@ struct TodayReminderView: View {
                 }
                 .frame(height: 10)
                 .padding(.trailing, 8)
-                
-                Divider().background(Color.white.opacity(0.06))
-                
+
                 ScrollView {
                     VStack(spacing: 8) {
                         ForEach(store.plants.indices, id: \.self) { idx in
-                            PlantRowView(plant: $store.plants[idx])
+                            NavigationLink {
+                                EditPlantView(plant: $store.plants[idx]).environmentObject(store)
+                            } label: {
+                                PlantRowView(plant: $store.plants[idx])
+                            }
                         }
                     }
                     .padding(.vertical, 8)
@@ -57,7 +62,7 @@ struct TodayReminderView: View {
                 Spacer()
             }
             .padding()
-            
+
             // زر + دائري في الأسفل يمين
             VStack {
                 Spacer()
@@ -83,16 +88,36 @@ struct TodayReminderView: View {
             }
         }
         .preferredColorScheme(.dark)
+
+        // راقب تغيّر قيمة progress — إذا أصبحت مكتملة (1.0) افتح شاشة Done
+        .onChange(of: progress) {
+            if progress >= 1.0 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    navigateToDone = true
+                }
+            }
+        }
+        .onAppear {
+            if progress >= 1.0 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    navigateToDone = true
+                }
+            }
+        }
+        // افتح شاشة Done كاملة ومرّر الـ store إليها
+        .fullScreenCover(isPresented: $navigateToDone) {
+            Done().environmentObject(store)
+        }
     }
 }
 
+// MARK: - PlantRowView
 struct PlantRowView: View {
     @Binding var plant: Plant
-    
+
     var body: some View {
         VStack(spacing: 8) {
             HStack(alignment: .top, spacing: 12) {
-                // زر التحديد (الدائرة / الصح)
                 Button {
                     withAnimation(.easeInOut(duration: 0.25)) {
                         plant.isWatered.toggle()
@@ -108,10 +133,8 @@ struct PlantRowView: View {
                             .foregroundColor(.gray)
                     }
                 }
-                
-                // المحتوى النصي: سطر المكان فوق الاسم ثم البادجات
+
                 VStack(alignment: .leading, spacing: 6) {
-                    // السطر العلوي: أيقونة + "in <Room>" بلون رمادي وخط صغير
                     HStack(spacing: 6) {
                         Image(systemName: "paperplane")
                             .foregroundColor(.gray)
@@ -120,14 +143,12 @@ struct PlantRowView: View {
                             .font(.caption)
                             .foregroundColor(.gray)
                     }
-                    
-                    // اسم النبتة الكبير
+
                     Text(plant.name)
                         .font(.title3)
                         .foregroundColor(.white)
                         .fontWeight(.regular)
-                    
-                    // البادجات (إضاءة وكمية ماء)
+
                     HStack(spacing: 8) {
                         Label(plant.light, systemImage: "sun.max")
                             .font(.caption)
@@ -153,11 +174,14 @@ struct PlantRowView: View {
     }
 }
 
+// MARK: - Preview
 struct TodayReminderView_Previews: PreviewProvider {
     static var previews: some View {
-        // استخدمي مخزن فارغ للـ Preview حتى لا تظهر نباتات افتراضية
         let store = PlantStore()
-        return TodayReminderView().environmentObject(store)
+        store.add(Plant(name: "Pothos", room: "Bedroom", light: "Full Sun", wateringDay: "Every day", waterAmount: "20-50 ml"))
+        store.add(Plant(name: "Ficus", room: "Living Room", light: "Partial Sun", wateringDay: "Every 2 days", waterAmount: "50-100 ml"))
+        return NavigationStack {
+            TodayReminderView().environmentObject(store)
+        }
     }
 }
-// عند الضغظ على زر النبتة نفسها يفترض انه منه تطلع صفحة التعديل والحذف 

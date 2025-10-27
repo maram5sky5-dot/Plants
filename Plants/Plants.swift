@@ -1,8 +1,8 @@
 //
-//  plant.swift
+//  Model.swift
 //  Plants
 //
-//  Created by Maram Ibrahim  on 04/05/1447 AH.
+//  Created by Maram Ibrahim  on 05/05/1447 AH.
 //
 import Foundation
 
@@ -15,4 +15,3 @@ struct Plant: Identifiable, Equatable {
     var waterAmount: String
     var isWatered: Bool = false
 }
-
