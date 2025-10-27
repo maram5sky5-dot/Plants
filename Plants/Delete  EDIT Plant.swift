@@ -10,22 +10,28 @@ import SwiftUI
 
 struct EditPlantView: View {
     // هنا نستقبل Binding إلى العنصر داخل الـ store
-    @Binding var plant: Plant
     @EnvironmentObject var store: PlantStore
     @Environment(\.dismiss) private var dismiss
     
-    // حالة التأكيد للحذف
-    @State private var showingDeleteAlert = false
+    @State private var plantName: String = ""
+    @State private var room: String = "Bedroom"
+    @State private var light: String = "Full Sun"
+    @State private var wateringDay: String = "Every day"
+    @State private var waterAmount: String = "20-50 ml"
     
-var body: some View {
+    let rooms = ["Bedroom","Living Room","Kitchen","Balcony","Bathroom"]
+    let lightOptions = ["Full Sun","Partial Sun","Low Light"]
+    let wateringDaysOptions = ["Every day","Every 2 days","Every 3 days","Once a week","Every 10 days","Every 2 weeks"]
+    let waterAmounts = ["20-50 ml","50-100 ml","100-200 ml","200-300 ml"]
+    
+    var body: some View {
         NavigationView {
             VStack(spacing: 18) {
-                // Plant Name
                 HStack {
                     Text("Plant Name")
                         .foregroundColor(.white)
                     Spacer()
-                    TextField("Pothos", text: $plant.name)
+                    TextField("Pothos", text: $plantName)
                         .multilineTextAlignment(.leading)
                         .foregroundColor(.gray)
                         .disableAutocorrection(true)
@@ -34,21 +40,22 @@ var body: some View {
                 .background(Color.white.opacity(0.06))
                 .cornerRadius(12)
                 
-                // Room + Light (تعدِيلات مباشرة على binding)
+                // Room & Light group (كما في كودك لكن مع .tint(.gray))
                 VStack(spacing: 0) {
                     HStack {
-                        Image(systemName: "location").foregroundColor(.white.opacity(0.9)).frame(width: 20)
+                        Image(systemName: "location")
+                            .foregroundColor(.white.opacity(0.9))
+                            .frame(width: 20)
                         Text("Room").foregroundColor(.white)
                         Spacer()
-                        Picker("", selection: $plant.room) {
-                            ForEach(["Bedroom","Living Room","Kitchen","Balcony","Bathroom"], id: \.self) { r in
-                                Text(r).tag(r)
+                        HStack(spacing: 6) {
+                            Picker("", selection: $room) {
+                                ForEach(rooms, id: \.self) { r in Text(r).tag(r) }
                             }
-                        }
-                        .labelsHidden()
-                        .pickerStyle(.menu)
-                        .tint(.gray)
-                        .frame(minWidth: 90)
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .tint(.gray)
+                        }.frame(minWidth: 90)
                     }
                     .padding(.vertical, 14)
                     .padding(.horizontal, 12)
@@ -59,14 +66,15 @@ var body: some View {
                         Image(systemName: "sun.max").foregroundColor(.white.opacity(0.9)).frame(width: 20)
                         Text("Light").foregroundColor(.white)
                         Spacer()
-                        Picker("", selection: $plant.light) {
-                            ForEach(["Full Sun","Partial Sun","Low Light"], id: \.self) { opt in
-                                Text(opt).tag(opt)
+                        HStack(spacing: 6) {
+                            
+                            Picker("", selection: $light) {
+                                ForEach(lightOptions, id: \.self) { opt in Text(opt).tag(opt) }
                             }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .tint(.gray)
                         }
-                        .labelsHidden()
-                        .pickerStyle(.menu)
-                        .tint(.gray)
                         .frame(minWidth: 90)
                     }
                     .padding(.vertical, 14)
@@ -75,37 +83,41 @@ var body: some View {
                 .background(Color.white.opacity(0.06))
                 .cornerRadius(12)
                 
-                // Watering Days + Water Amount
+                // Watering rows
                 VStack(spacing: 12) {
                     HStack {
                         Image(systemName: "drop").foregroundColor(.white.opacity(0.9))
                         Text("Watering Days").foregroundColor(.white)
                         Spacer()
-                        Picker("", selection: $plant.wateringDay) {
-                            ForEach(["Every day","Every 2 days","Every 3 days","Once a week","Every 10 days","Every 2 weeks"], id: \.self) { d in
-                                Text(d).tag(d)
+                        HStack(spacing: 6) {
+                           
+                            Picker("", selection: $wateringDay) {
+                                ForEach(wateringDaysOptions, id: \.self) { d in Text(d).tag(d) }
                             }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .tint(.gray)
                         }
-                        .labelsHidden()
-                        .pickerStyle(.menu)
-                        .tint(.gray)
                     }
                     .padding()
                     .background(Color.white.opacity(0.06))
                     .cornerRadius(12)
                     
+                    
+                    
                     HStack {
                         Image(systemName: "drop").foregroundColor(.white.opacity(0.9))
                         Text("Water").foregroundColor(.white)
                         Spacer()
-                        Picker("", selection: $plant.waterAmount) {
-                            ForEach(["20-50 ml","50-100 ml","100-200 ml","200-300 ml"], id: \.self) { a in
-                                Text(a).tag(a)
+                        HStack(spacing: 6) {
+                           
+                            Picker("", selection: $waterAmount) {
+                                ForEach(waterAmounts, id: \.self) { a in Text(a).tag(a) }
                             }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .tint(.gray)
                         }
-                        .labelsHidden()
-                        .pickerStyle(.menu)
-                        .tint(.gray)
                     }
                     .padding()
                     .background(Color.white.opacity(0.06))
@@ -113,61 +125,44 @@ var body: some View {
                 }
                 
                 Spacer()
-                
-                // زر الحذف الأحمر
-                Button {
-                    showingDeleteAlert = true
-                } label: {
-                    Text("Delete Reminder")
-                        .foregroundColor(.red)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.white.opacity(0.03))
-                        .cornerRadius(12)
-                }
-                .padding(.bottom, 10)
             }
             .padding()
             .background(Color.black.ignoresSafeArea())
             .preferredColorScheme(.dark)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // زر الغلق
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 24))
+                            .font(.system(size: 28))
                             .foregroundColor(.white.opacity(0.9))
                     }
                 }
-                
-                // العنوان
                 ToolbarItem(placement: .principal) {
                     Text("Set Reminder").font(.headline).foregroundColor(.white)
                 }
-                
-                // زر الحفظ (ليس مطلوباً لأن Binding يحدث مباشرة، لكن نضعه ليغلق)
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        // لا حاجة لحفظ صريح لأن Binding يغيّر store مباشرة
+                        // حفظ النبتة في المخزن ثم إغلاق الـ sheet
+                        let name = plantName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Unnamed" : plantName
+                        let plant = Plant(name: name, room: room, light: light, wateringDay: wateringDay, waterAmount: waterAmount)
+                        store.add(plant)
                         dismiss()
                     } label: {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 28))
                             .foregroundColor(Color(red: 0.16, green: 0.88, blue: 0.66))
+                        
                     }
                 }
             }
-            // تأكيد الحذف
-            .alert("Delete Plant", isPresented: $showingDeleteAlert, actions: {
-                Button("Delete", role: .destructive) {
-                    store.remove(plant)   // يحذف من المخزن بواسطة id
-                    dismiss()
-                }
-                Button("Cancel", role: .cancel) { }
-            }, message: {
-                Text("Are you sure you want to delete this plant?")
-            })
-        } // NavigationView
+        }
     }
 }
+
+struct Delete : PreviewProvider {
+    static var previews: some View {
+        Set_Reminder().environmentObject(PlantStore())
+    }
+}
+
