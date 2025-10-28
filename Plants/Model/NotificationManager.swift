@@ -12,7 +12,7 @@ final class NotificationManager {
     static let shared = NotificationManager()
     private init() {}
 
-    // طلب إذن الإشعارات
+    // MARK: - Authorization (لا يستدعي تلقائياً — لديك خيار استدعاءه عند الحاجة)
     func requestAuthorization(completion: @escaping (Bool) -> Void) {
         let center = UNUserNotificationCenter.current()
         center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
@@ -25,14 +25,14 @@ final class NotificationManager {
         }
     }
 
-    // جدولة إشعار للنبته
-    // - parameter id: نستخدم id.uuidString كمعرّف للإشعار حتى نقدر نلغيّه لاحقًا
-    // - parameter title/subtitle: نص الإشعار
-    // - parameter daysInterval: عدد الأيام بين التذكيرات (1 = يومي، 2 = كل يومين، 7 = أسبوعي)
-    // - parameter atHour/atMinute: الوقت المطلوب لظهور الإشعار (افتراضي 09:00)
+    // MARK: - Repeating reminders (existing)
+    /// جدول تذكير متكرر (يومي/كل N أيام/أسبوعي)
+    /// - daysInterval: 1 => يومي (repeats true using calendar hour/minute),
+    ///                 7 => أسبوعي (نفس يوم الأسبوع والساعة),
+    ///                 >1 and !=7 => كل N يوم (repeats true using time interval)
     func scheduleReminder(id: UUID,
                           title: String,
-                          subtitle: String?,
+                          subtitle: String? = nil,
                           daysInterval: Int = 1,
                           atHour: Int = 9,
                           atMinute: Int = 0) {
@@ -48,9 +48,8 @@ final class NotificationManager {
         if let sub = subtitle { content.body = sub }
         content.sound = .default
 
-        // إذا كان التكرار يومي/أسبوعي (قائمة محددة)، نستخدم UNCalendarNotificationTrigger
+        // يومي (repeats true)
         if daysInterval == 1 {
-            // كل يوم عند الساعة المحددة -> نستخدم Calendar components مع repeats = true
             var dateComponents = DateComponents()
             dateComponents.hour = atHour
             dateComponents.minute = atMinute
@@ -63,15 +62,12 @@ final class NotificationManager {
             return
         }
 
-        // إذا كان كل أسبوع (7 أيام) عند نفس اليوم والساعة: نستخدم weekday حسب اليوم المقبل
+        // أسبوعي (نفس weekday)
         if daysInterval == 7 {
-            var calendar = Calendar.current
-            calendar.locale = Locale.current
-            // نختار اليوم الحالي + theHour
             let now = Date()
-            let comps = calendar.dateComponents([.weekday], from: now)
+            let comps = Calendar.current.dateComponents([.weekday], from: now)
             var dateComponents = DateComponents()
-            dateComponents.weekday = comps.weekday // نفس يوم الأسبوع
+            dateComponents.weekday = comps.weekday
             dateComponents.hour = atHour
             dateComponents.minute = atMinute
 
@@ -83,22 +79,71 @@ final class NotificationManager {
             return
         }
 
-        // إذا كان التكرار كل N أيام غير 1 و 7، نستخدم UNTimeIntervalNotificationTrigger مع repeats = true
-        // ملاحظة: repeats true يحتاج interval >= 60s، لذلك نستخدم daysInterval * 86400
+        // كل N أيام (باستخدام time interval، repeats true). ملاحظة: repeats true يتطلب interval >= 60s
         let interval = TimeInterval(daysInterval * 24 * 60 * 60)
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: true)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(60, interval), repeats: true)
         let request = UNNotificationRequest(identifier: id.uuidString, content: content, trigger: trigger)
         center.add(request) { error in
             if let e = error { print("schedule error:", e.localizedDescription) }
         }
     }
 
-    // إلغاء إشعار بناءً على معرف النبته
+    // MARK: - One-time reminders (new)
+    /// جدولة إشعار لمرة واحدة بعد عدد محدد من الثواني (مثال: بعد 10s)
+    func scheduleReminderAfter(id: UUID,
+                               title: String,
+                               subtitle: String? = nil,
+                               after seconds: TimeInterval = 10) {
+        let center = UNUserNotificationCenter.current()
+
+        // إزالة أي طلب سابق لنفس المعرف لتجنّب التكرار
+        center.removePendingNotificationRequests(withIdentifiers: [id.uuidString])
+
+        let content = UNMutableNotificationContent()
+        content.title = title
+        if let s = subtitle { content.body = s }
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, seconds), repeats: false)
+        let request = UNNotificationRequest(identifier: id.uuidString, content: content, trigger: trigger)
+
+        center.add(request) { error in
+            if let e = error {
+                print("Error scheduling one-time notification:", e.localizedDescription)
+            } else {
+                print("Scheduled one-time notification \(id.uuidString) after \(seconds)s")
+            }
+        }
+    }
+
+    /// جدولة إشعار لمرة واحدة عند تاريخ محدد (اختياري)
+    func scheduleOneTimeReminder(id: UUID, title: String, subtitle: String? = nil, date: Date) {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [id.uuidString])
+
+        let content = UNMutableNotificationContent()
+        content.title = title
+        if let s = subtitle { content.body = s }
+        content.sound = .default
+
+        let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+        let request = UNNotificationRequest(identifier: id.uuidString, content: content, trigger: trigger)
+
+        center.add(request) { error in
+            if let e = error {
+                print("Error scheduling one-time calendar notification:", e.localizedDescription)
+            } else {
+                print("Scheduled one-time calendar notification for \(date) (id: \(id.uuidString))")
+            }
+        }
+    }
+
+    // MARK: - Cancel
+    /// إلغاء إشعار بناءً على معرف النبته
     func cancelReminder(id: UUID) {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: [id.uuidString])
-        // يمكن أيضاً حذف الإشعارات التي ظهرت (غير ضروري عادة)
         center.removeDeliveredNotifications(withIdentifiers: [id.uuidString])
     }
 }
-
