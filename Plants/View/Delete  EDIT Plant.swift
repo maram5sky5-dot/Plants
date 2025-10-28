@@ -1,14 +1,16 @@
 //
-//  Set Reminder.swift
+//  Delete  EDIT Plant.swift
 //  Plants
 //
-//  Created by Maram Ibrahim  on 28/04/1447 AH.
+//  Created by Maram Ibrahim  on 04/05/1447 AH.
 //
+
 import SwiftUI
 
-struct Set_Reminder: View {
+struct EditPlantView: View {
     @EnvironmentObject var store: PlantStore
     @Environment(\.dismiss) private var dismiss
+    @Binding var plant: Plant
 
     @State private var plantName: String = ""
     @State private var room: String = "Bedroom"
@@ -16,8 +18,7 @@ struct Set_Reminder: View {
     @State private var wateringDay: String = "Every day"
     @State private var waterAmount: String = "20-50 ml"
 
-    // حالة تنقّل حديثة
-    @State private var navigateToToday: Bool = false
+    @State private var showingDeleteAlert = false
 
     let rooms = ["Bedroom","Living Room","Kitchen","Balcony","Bathroom"]
     let lightOptions = ["Full Sun","Partial Sun","Low Light"]
@@ -25,8 +26,9 @@ struct Set_Reminder: View {
     let waterAmounts = ["20-50 ml","50-100 ml","100-200 ml","200-300 ml"]
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack(spacing: 18) {
+                // ===== form fields =====
                 HStack {
                     Text("Plant Name")
                         .foregroundColor(.white)
@@ -39,8 +41,8 @@ struct Set_Reminder: View {
                 .padding()
                 .background(Color.white.opacity(0.06))
                 .cornerRadius(12)
-
-                // --- Room & Light Pickers ---
+                
+                // Room & Light group
                 VStack(spacing: 0) {
                     HStack {
                         Image(systemName: "location")
@@ -54,12 +56,13 @@ struct Set_Reminder: View {
                         .labelsHidden()
                         .pickerStyle(.menu)
                         .tint(.gray)
+                        .frame(minWidth: 90)
                     }
                     .padding(.vertical, 14)
                     .padding(.horizontal, 12)
-
-                    Divider().background(Color.gray.opacity(0.6))
-
+                    
+                    Divider().background(Color.gray.opacity(0.4))
+                    
                     HStack {
                         Image(systemName: "sun.max").foregroundColor(.white.opacity(0.9)).frame(width: 20)
                         Text("Light").foregroundColor(.white)
@@ -70,22 +73,22 @@ struct Set_Reminder: View {
                         .labelsHidden()
                         .pickerStyle(.menu)
                         .tint(.gray)
+                        .frame(minWidth: 90)
                     }
                     .padding(.vertical, 14)
                     .padding(.horizontal, 12)
                 }
                 .background(Color.white.opacity(0.06))
                 .cornerRadius(12)
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.02), lineWidth: 0.5))
-
-                // --- Watering ---
+            
+                // Watering rows
                 VStack(spacing: 0) {
                     HStack {
                         Image(systemName: "drop").foregroundColor(.white.opacity(0.9))
                         Text("Watering Days").foregroundColor(.white)
                         Spacer()
                         Picker("", selection: $wateringDay) {
-                            ForEach(wateringDaysOptions, id: \.self) { day in Text(day).tag(day) }
+                            ForEach(wateringDaysOptions, id: \.self) { d in Text(d).tag(d) }
                         }
                         .labelsHidden()
                         .pickerStyle(.menu)
@@ -94,15 +97,14 @@ struct Set_Reminder: View {
                     .padding()
                     .background(Color.white.opacity(0.06))
                     .cornerRadius(12)
-
-                    Divider().background(Color.gray.opacity(0.6))
+                    Divider().background(Color.gray.opacity(0.4))
 
                     HStack {
                         Image(systemName: "drop").foregroundColor(.white.opacity(0.9))
                         Text("Water").foregroundColor(.white)
                         Spacer()
                         Picker("", selection: $waterAmount) {
-                            ForEach(waterAmounts, id: \.self) { amt in Text(amt).tag(amt) }
+                            ForEach(waterAmounts, id: \.self) { a in Text(a).tag(a) }
                         }
                         .labelsHidden()
                         .pickerStyle(.menu)
@@ -113,7 +115,27 @@ struct Set_Reminder: View {
                     .cornerRadius(12)
                 }
 
-                Spacer()
+                // ===== Delete button مباشرة بعد الخيارات =====
+                Button {
+                    showingDeleteAlert = true
+                } label: {
+                    Text("Delete Reminder")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .foregroundColor(.red)
+                        .background(Color.white.opacity(0.04))
+                        .cornerRadius(12)
+                }
+                .alert("Delete reminder?", isPresented: $showingDeleteAlert) {
+                    Button("Delete", role: .destructive) {
+                        performDelete()
+                    }
+                    Button("Cancel", role: .cancel) { }
+                } message: {
+                    Text("This will remove the plant from your list.")
+                }
+
+                Spacer() // يبقي المساحة فارغة أسفل الزر
             }
             .padding()
             .background(Color.black.ignoresSafeArea())
@@ -129,37 +151,52 @@ struct Set_Reminder: View {
                 }
 
                 ToolbarItem(placement: .principal) {
-                    Text("Set Reminder").font(.headline).foregroundColor(.white)
+                    Text("Edit Plant").font(.headline).foregroundColor(.white)
                 }
 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        // حفظ النبتة في المخزن
-                        let name = plantName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Unnamed" : plantName
-                        let plant = Plant(name: name, room: room, light: light, wateringDay: wateringDay, waterAmount: waterAmount)
-                        store.add(plant)
-
-                        // تفعيل التنقّل لعرض TodayReminderView
-                        navigateToToday = true
+                        saveChanges()
+                        dismiss()
                     } label: {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 28))
                             .foregroundColor(Color(red: 0.16, green: 0.88, blue: 0.66))
-                            .shadow(radius: 1)
                     }
                 }
             }
-            // هذا هو البديل الحديث لربط boolean بالتنقّل داخل NavigationStack
-            .navigationDestination(isPresented: $navigateToToday) {
-                // نفترض أن لديك TodayReminderView الذي يعتمد على store
-                TodayReminderView().environmentObject(store)
+            .onAppear {
+                plantName = plant.name
+                room = plant.room
+                light = plant.light
+                wateringDay = plant.wateringDay
+                waterAmount = plant.waterAmount
             }
-        } // end NavigationStack
+        }
+    }
+
+    private func saveChanges() {
+        plant.name = plantName
+        plant.room = room
+        plant.light = light
+        plant.wateringDay = wateringDay
+        plant.waterAmount = waterAmount
+    }
+
+    private func performDelete() {
+        if let idx = store.plants.firstIndex(where: { $0.id == plant.id }) {
+            store.plants.remove(at: idx)
+        }
+        dismiss()
     }
 }
 
-struct Set_Reminder_Previews: PreviewProvider {
+struct EditPlantView_Previews: PreviewProvider {
     static var previews: some View {
-        Set_Reminder().environmentObject(PlantStore())
+        let store = PlantStore()
+        let sample = Plant(name: "Pothos", room: "Bedroom", light: "Full Sun", wateringDay: "Every day", waterAmount: "20-50 ml")
+        store.add(sample)
+        return EditPlantView(plant: .constant(sample))
+            .environmentObject(store)
     }
 }
