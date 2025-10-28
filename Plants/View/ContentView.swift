@@ -116,6 +116,7 @@ struct ReminderSetupView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
+                        
                 }
             }
             .padding()
@@ -128,8 +129,7 @@ struct ContentView_Previews: PreviewProvider {
         Group {
             ContentView()
                 .preferredColorScheme(.dark)
-            ContentView()
-                .preferredColorScheme(.light)
+           
         }
     }
 }

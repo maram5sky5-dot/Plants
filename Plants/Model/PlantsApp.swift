@@ -8,13 +8,25 @@
 import SwiftUI
 
 @main
-struct Plants_App: App {
+struct PlantsApp: App {
     @StateObject private var store = PlantStore()
-    
+
     var body: some Scene {
         WindowGroup {
-            TodayReminderView()
-                .environmentObject(store)
+            NavigationStack {
+                ContentView()
+                    .environmentObject(store)
+            }
+            .onAppear {
+                // طلب صلاحية الإشعارات مرة واحدة عند فتح التطبيق
+                NotificationManager.shared.requestAuthorization { granted in
+                    if granted {
+                        print("Notifications authorized ✅")
+                    } else {
+                        print("Notifications denied ❌")
+                    }
+                }
+            }
         }
     }
 }

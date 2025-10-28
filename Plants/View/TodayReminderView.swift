@@ -3,17 +3,15 @@
 //
 //  Created by Maram Ibrahim  on 01/05/1447 AH.
 //
-
 import SwiftUI
 
-// MARK: - TodayReminderView (مرتبط بصفحة Done عند اكتمال البار)
+// MARK: - TodayReminderView
 struct TodayReminderView: View {
     @EnvironmentObject var store: PlantStore
     @State private var showingAdd = false
-
-    // عند true سيعرض شاشة Done
     @State private var navigateToDone: Bool = false
 
+    // نسبة النباتات المسقية
     var progress: Double {
         guard !store.plants.isEmpty else { return 0.0 }
         let watered = store.plants.filter { $0.isWatered }.count
@@ -51,9 +49,21 @@ struct TodayReminderView: View {
                     VStack(spacing: 8) {
                         ForEach(store.plants.indices, id: \.self) { idx in
                             NavigationLink {
-                                EditPlantView(plant: $store.plants[idx]).environmentObject(store)
+                                EditPlantView(plant: $store.plants[idx])
+                                    .environmentObject(store)
                             } label: {
                                 PlantRowView(plant: $store.plants[idx])
+                            }
+                            .buttonStyle(.plain)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    let idToDelete = store.plants[idx].id
+                                    store.remove(by: idToDelete)
+                                    NotificationManager.shared.cancelReminder(id: idToDelete)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                                .tint(.red)
                             }
                         }
                     }
@@ -63,7 +73,6 @@ struct TodayReminderView: View {
             }
             .padding()
 
-            // زر + دائري في الأسفل يمين
             VStack {
                 Spacer()
                 HStack {
@@ -89,22 +98,27 @@ struct TodayReminderView: View {
         }
         .preferredColorScheme(.dark)
 
-        // راقب تغيّر قيمة progress — إذا أصبحت مكتملة (1.0) افتح شاشة Done
-        .onChange(of: progress) {
-            if progress >= 1.0 {
+        // راقب تغيّر قيمة progress بدون deprecated
+        .onChange(of: progress) { oldValue, newValue in
+            if newValue >= 1.0 {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                     navigateToDone = true
                 }
             }
         }
         .onAppear {
+            // طلب صلاحية الإشعارات
+            NotificationManager.shared.requestAuthorization { granted in
+                if granted { print("Notifications authorized ✅") }
+                else { print("Notifications denied ❌") }
+            }
+
             if progress >= 1.0 {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                     navigateToDone = true
                 }
             }
         }
-        // افتح شاشة Done كاملة ومرّر الـ store إليها
         .fullScreenCover(isPresented: $navigateToDone) {
             Done().environmentObject(store)
         }
@@ -123,15 +137,9 @@ struct PlantRowView: View {
                         plant.isWatered.toggle()
                     }
                 } label: {
-                    if plant.isWatered {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(Color(red: 0.16, green: 0.88, blue: 0.66))
-                    } else {
-                        Image(systemName: "circle")
-                            .font(.title2)
-                            .foregroundColor(.gray)
-                    }
+                    Image(systemName: plant.isWatered ? "checkmark.circle.fill" : "circle")
+                        .font(.title2)
+                        .foregroundColor(plant.isWatered ? Color(red: 0.16, green: 0.88, blue: 0.66) : .gray)
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
